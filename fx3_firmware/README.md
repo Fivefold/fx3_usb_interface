@@ -1,6 +1,6 @@
 # FX3 Firmware
 
-This folder contains the firmware code for the *CYUSB3KIT-003 EZ-USB™ FX3 SuperSpeed explorer kit*
+This folder contains the firmware code for the *CYUSB3KIT-003 EZ-USB™ FX3 SuperSpeed explorer kit*.
 
 It implements a 32-bit wide GPIF II interface controlled by an external clock. Data can be continuously streamed from the GPIF II interface to the PC, with a maximum speed of 3050 Mbit/s. It is based on the cyfxbulksrcsink example from the EZ-USB FX3 SDK.
 
@@ -14,14 +14,23 @@ Instructions:
 
 1. Clone this repository
 2. Install the EZ-USB FX3 SDK (version 1.3.5), available under https://www.infineon.com/cms/en/design-support/tools/sdk/usb-controllers-sdk/ez-usb-fx3-software-development-kit/
-3. After installing, locate the "cyfxbulksrcsink" folder located in the SDK's installation directory at /Cypress/EZ-USB FX3 SDK/1.3/firmware/basic_examples/cyfxbulksrcsink
-4. Copy this folder into this directory (./fx3_firmware).
+3. After installing, locate the "cyfxbulksrcsink" folder located in the SDK's installation directory at `/Cypress/EZ-USB FX3 SDK/1.3/firmware/basic_examples/cyfxbulksrcsink`
+4. Copy this folder into this directory. You should now have a folder structure like this:
+   ```
+    fx3_firmware
+    ├── cyfxbulksrcsink
+    │   └── ...
+    ├── patches
+    │   └── ...
+    ├── README.md
+    └── makefile
+   ```
 5. Run the makefile by opening a terminal and running `make`. If you are on a Windows system you can use [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install)
 6. You should now have a new folder called **gpiftousb** in this directory. This contains the firmware code.
 
 For compilation instructions refer to the [SuperSpeed Explorer Kit User Guide](https://www.infineon.com/cms/en/product/evaluation-boards/cyusb3kit-003), specifically section "2.6 EZ USB Suite (Eclipse) IDE
 
-To actually use the firmware to stream data to a PC you also need a small Windows application called *CollectData.exe*. It is part of the examples of the *SuperSpeed Device Design By Example* book by John Hyde
+To actually use the firmware to stream data to a PC you also need a small Windows application called *CollectData.exe*. It is part of the examples of the *SuperSpeed Device Design By Example* book by John Hyde which can be downloaded under https://www.cypress.com/fx3book. After extraction, it can be found under `SuperSpeed Design Examples V1.2.1/PC Utilities`. The corresponding Visual Studio project is under `SuperSpeed Design Examples V1.2.1/Visual Studio Projects/CollectData`.
 
 ---
 
