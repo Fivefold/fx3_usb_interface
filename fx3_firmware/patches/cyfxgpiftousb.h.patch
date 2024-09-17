@@ -1,0 +1,51 @@
+104c
+#endif /* _INCLUDED_CYFXGPIFTOUSB_H_ */
+.
+86,87c
+/* Parameters for loop-back function. */
+#define CY_FX_EP_LOOP_OUT               (0x03)
+#define CY_FX_EP_LOOP_IN                (0x83)
+#define CY_FX_LOOP_PRODUCER_SOCK        CY_U3P_UIB_SOCKET_PROD_3
+#define CY_FX_LOOP_CONSUMER_SOCK        CY_U3P_UIB_SOCKET_CONS_3
+.
+83a
+/* Number of DMA buffers to be used on the channel. */
+#ifndef CY_FX_DMA_BUF_COUNT
+#define CY_FX_DMA_BUF_COUNT             (4)
+.
+81,82c
+/* Size of DMA buffers (in bytes) used by the application. */
+#ifndef CY_FX_DMA_BUF_SIZE
+#define CY_FX_DMA_BUF_SIZE              (16384) //16384
+#endif
+.
+65,79c
+#ifndef CY_FX_EP_BURST_LENGTH
+#define CY_FX_EP_BURST_LENGTH           (16)
+#endif
+.
+57,63d
+43,51c
+#define CY_FX_EP_CONSUMER               0x82    /* EP 2 IN */
+#define CY_FX_EP_CONSUMER_SOCKET        CY_U3P_UIB_SOCKET_CONS_2    /* Socket 2 is consumer */
+#define CY_FX_GPIF_PRODUCER_SOCKET_0    CY_U3P_PIB_SOCKET_0
+#define CY_FX_GPIF_PRODUCER_SOCKET_1    CY_U3P_PIB_SOCKET_1
+.
+32c
+#define CY_FX_GPIFTOUSB_DMA_TX_SIZE        (0)                       /* DMA transfer size is set to infinite */
+#define CY_FX_GPIFTOUSB_THREAD_STACK       (0x1000)                  /* Bulk loop application thread stack size */
+#define CY_FX_GPIFTOUSB_THREAD_PRIORITY    (8)                       /* Bulk loop application thread priority */
+#define CY_FX_GPIFTOUSB_PATTERN            (0xAA)                    /* 8-bit pattern to be loaded to the source buffers. */
+
+/* Endpoint and socket definitions for the application */
+.
+25,26c
+#ifndef _INCLUDED_CYFXGPIFTOUSB_H_
+#define _INCLUDED_CYFXGPIFTOUSB_H_
+.
+23c
+/* This file contains the constants used by the application */
+.
+2c
+ ## Cypress USB 3.0 Platform header file (cyfxgpiftousb.h)
+.

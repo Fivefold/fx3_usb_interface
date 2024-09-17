@@ -1,0 +1,88 @@
+246c
+    CY_FX_EP_LOOP_OUT,              /* Endpoint address and description */
+    CY_U3P_USB_EP_BULK,             /* Bulk endpoint type */
+    0x40,0x00,                      /* Max packet size = 64 bytes */
+    0x00,                           /* Servicing interval for data transfers : 0 for bulk */
+
+    0x07,                           /* Descriptor size */
+    CY_U3P_USB_ENDPNT_DESCR,        /* Endpoint descriptor type */
+    CY_FX_EP_LOOP_IN,               /* Endpoint address and description */
+.
+243d
+238c
+    CY_FX_EP_CONSUMER,              /* Endpoint address and description */
+.
+235c
+    /* Endpoint descriptor for consumer EP */
+.
+229c
+    0x03,                           /* Number of endpoints */
+.
+217c
+    0x27,0x00,                      /* Length of this descriptor and all sub descriptors */
+.
+205c
+    CY_FX_EP_LOOP_OUT,              /* Endpoint address and description */
+    CY_U3P_USB_EP_BULK,             /* Bulk endpoint type */
+    0x00,0x02,                      /* Max packet size = 512 bytes */
+    0x00,                           /* Servicing interval for data transfers : 0 for bulk */
+
+    0x07,                           /* Descriptor size */
+    CY_U3P_USB_ENDPNT_DESCR,        /* Endpoint descriptor type */
+    CY_FX_EP_LOOP_IN,               /* Endpoint address and description */
+.
+202d
+197c
+    CY_FX_EP_CONSUMER,              /* Endpoint address and description */
+.
+194c
+    /* Endpoint descriptor for consumer EP */
+.
+188c
+    0x03,                           /* Number of endpoints */
+.
+176c
+    0x27,0x00,                      /* Length of this descriptor and all sub descriptors */
+.
+165c
+    3,                              /* Max no. of packets in a burst(0-15) - 3: burst 4 packets at a time */
+    0x00,                           /* Max streams for bulk EP = 0 (No streams) */
+    0x00,0x00,                      /* Service interval for the EP : 0 for bulk */
+
+    /* Endpoint descriptor for consumer EP */
+    0x07,                           /* Descriptor size */
+    CY_U3P_USB_ENDPNT_DESCR,        /* Endpoint descriptor type */
+    CY_FX_EP_LOOP_IN,               /* Endpoint address and description */
+    CY_U3P_USB_EP_BULK,             /* Bulk endpoint type */
+    0x00,0x04,                      /* Max packet size = 1024 bytes */
+    0x00,                           /* Servicing interval for data transfers : 0 for Bulk */
+
+    /* Super speed endpoint companion descriptor for consumer EP */
+    0x06,                           /* Descriptor size */
+    CY_U3P_SS_EP_COMPN_DESCR,       /* SS endpoint companion descriptor type */
+    3,                              /* Max no. of packets in a burst(0-15) - 3: burst 4 packets at a time */
+.
+157c
+    CY_FX_EP_LOOP_OUT,              /* Endpoint address and description */
+.
+147c
+    /* Super speed endpoint companion descriptor for consumer EP */
+.
+145c
+    0x00,                           /* Servicing interval for data transfers : 0 for Bulk */
+.
+142c
+    CY_FX_EP_CONSUMER,              /* Endpoint address and description */
+.
+139c
+    /* Endpoint descriptor for consumer EP */
+.
+133c
+    0x03,                           /* Number of end points */
+.
+121c
+    0x39,0x00,                      /* Length of this descriptor and all sub descriptors */
+.
+35c
+#include "cyfxgpiftousb.h"
+.

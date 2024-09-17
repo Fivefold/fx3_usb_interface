@@ -1,0 +1,56 @@
+47,64c
+    * continuous_read.cydsn : Folder containing the GPIF II Designer project used
+      in this example.
+.
+44c
+    * makefile              : GNU make compliant build script for compiling this
+.
+41,42c
+    * cyfxtx.c              : ThreadX RTOS wrappers and utility functions required
+      by the FX3 API library.
+.
+38,39c
+    * cyfxgpif2config.h     : GPIF II Designer generated header file that implements
+      the state machine used by this example.
+.
+35c
+    * cyfxgpiftousb.c       : Source file implementing the GPIF to USB transfer
+      example.
+      
+    * cyfxbulkdscr.c        : C source file containing the USB descriptors that
+.
+31,33c
+    * cyfxgpiftousb.h       : Default constant definitions for this firmware
+      examples including endpoint number, burst size, number and size of the
+      buffers.
+.
+28c
+    * cyfx_gcc_startup.S    : Start-up code for the ARM-9 core on the FX3 device.
+.
+8,24c
+    This application also demonstrates the use of the endpoint specific CYU3P_USBEP_SS_RESET_EVT
+    event to detect and recover from potential USB data corruption due to protocol level errors.
+.
+5,6c
+    The application makes use a simple GPIF configuration which continually latches the state
+    of the GPIF data pins and fills them into full data packets to be sent to the USB host through
+    a BULK-IN endpoint. The GPIF configuration and DMA data path are setup to facilitate the fastest
+    possible data transfer. By default, the data streaming is done through an AUTO DMA channel;
+    but this can be changed to a MANUAL DMA channel using the STREAMING_MANUAL pre-processor
+    definition below. When the MANUAL DMA channel is used, the firmware modifies the first and
+    last bytes of each 1 KB of data with a sequential number pattern; so that we can check for
+    any missing data.
+
+    The application also implements a pair of BULK-OUT and BULK-IN endpoints configured in a
+    data loop back configuration. This data loop-back is done with firmware intervention using
+    a pair of MANUAL-IN and MANUAL-OUT DMA channels. This can be changed to a hardware based
+    AUTO loopback using the LOOPBACK_AUTO pre-processor definition.
+.
+2,3c
+    This application allows continuous data transfers from GPIF to USB. it is based on the official
+    bulk source sink example of Cypress.
+.
+0a
+GPIF to USB Transfer
+----------------------------
+.

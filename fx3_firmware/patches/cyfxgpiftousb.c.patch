@@ -1,0 +1,876 @@
+1229c
+    handle_fatal_error:
+.
+1214c
+    io_cfg.gpioSimpleEn[1]  = 0;
+.
+1212c
+    /* No GPIOs are enabled. */
+.
+1210c
+    io_cfg.lppMode   = CY_U3P_IO_MATRIX_LPP_UART_ONLY; //CY_U3P_IO_MATRIX_LPP_DEFAULT
+    io_cfg.s0Mode    = CY_U3P_SPORT_INACTIVE;
+    io_cfg.s1Mode    = CY_U3P_SPORT_INACTIVE;
+.
+1204,1205d
+1199,1202c
+    CyU3PMemSet ((uint8_t *)&io_cfg, 0, sizeof (io_cfg));
+.
+1189,1191c
+    /* Initialize the caches. The D-Cache is not enabled because it will cause a significant slowing down for
+     * an application which does not touch the data in the DMA buffers.
+.
+1182c
+    clockConfig.clkSrc        = CY_U3P_SYS_CLK;
+.
+1177c
+
+    clockConfig.setSysClk400  = CyFalse; //set to True if running in 100 MHz and 32bit mode
+.
+1141,1150c
+    ret = CyU3PThreadCreate (&glAppThread,                      /* App thread structure */
+                          "21:Gpif_to_USB",                     /* Thread ID and thread name */
+                          CyFxAppThread_Entry,                  /* App thread entry function */
+                          0,                                    /* No input parameter to thread */
+                          ptr,                                  /* Pointer to the allocated thread stack */
+                          CY_FX_GPIFTOUSB_THREAD_STACK,         /* App thread stack size */
+                          CY_FX_GPIFTOUSB_THREAD_PRIORITY,      /* App thread priority */
+                          CY_FX_GPIFTOUSB_THREAD_PRIORITY,      /* App thread priority */
+                          CYU3P_NO_TIME_SLICE,                  /* No time slice for the application thread */
+                          CYU3P_AUTO_START                      /* Start the thread immediately */
+.
+1138c
+    ptr = CyU3PMemAlloc (CY_FX_GPIFTOUSB_THREAD_STACK);
+.
+1129,1136d
+1115,1117c
+        CyU3PThreadSleep (10);
+.
+1099,1113d
+1081,1097c
+            CyU3PDeviceReset (CyFalse);
+            while (1)
+                CyU3PThreadSleep (1);
+.
+1075,1079d
+1072,1073c
+            glRstRqt = CyFalse;
+.
+1070c
+        if (glRstRqt)
+.
+1049,1057c
+        /* Try to get the USB 3.0 link back to U0. */
+.
+863,1047c
+        	printGpifToUSBDMAStats();
+.
+853,861c
+        if(glIsApplnActive && (glProdCount + glConsCount > 0))
+.
+848,849c
+    while (!glIsApplnActive)
+        CyU3PThreadSleep (100);
+.
+846c
+    CyFxApplnInit();
+.
+844c
+	
+    printGpifToUSBDMAStats();
+.
+842c
+    CyFxApplnDebugInit();
+.
+834,838d
+830c
+CyFxAppThread_Entry (
+.
+828c
+/* Entry function for the glAppThread. */
+.
+822,825c
+void printGpifToUSBDMAStats()
+{
+	CyU3PDebugPrint(0,"Prod:%d , Cons:%d\r\n",glProdCount,glConsCount);
+	glProdCount = 0;
+	glConsCount = 0;
+.
+812,820d
+808,809c
+    CyU3PDebugPrint (8, "CyFxApplnInit complete\r\n");
+.
+805,806c
+        CyU3PDebugPrint (4, "USB Connect failed, Error code = %d\n", apiRetStatus);
+        CyFxAppErrorHandler(apiRetStatus);
+.
+794,803c
+    apiRetStatus = CyU3PConnectState (CyTrue, CyTrue);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+.
+701,702c
+    /* The fast enumeration is the easiest way to setup a USB connection,
+     * where all enumeration phase is handled by the library. Only the
+     * class / vendor requests need to be handled by the application. */
+    CyU3PUsbRegisterSetupCallback(CyFxApplnUSBSetupCB, CyTrue);
+
+    /* Setup the callback to handle the USB events. */
+    CyU3PUsbRegisterEventCallback(CyFxApplnUSBEventCB);
+
+    /* Register a callback to handle LPM requests from the USB 3.0 host. */
+    CyU3PUsbRegisterLPMRequestCallback(CyFxApplnLPMRqtCB);
+.
+693,695c
+    if (apiRetStatus != CY_U3P_SUCCESS)
+.
+688,689c
+    /* Initialize the PIB block. */
+    apiRetStatus = CyU3PPibInit (CyTrue, &pibClk);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+    {
+        CyU3PDebugPrint (4, "PIB Init failed, error code = %d\r\n", apiRetStatus);
+        CyFxAppErrorHandler (apiRetStatus);
+    }
+.
+678,686c
+    CyU3PPibClock_t pibClk = {4, CyFalse, CyFalse, CY_U3P_SYS_CLK};
+.
+675c
+CyFxApplnInit (void)
+.
+665c
+CyFxApplnLPMRqtCB (
+.
+651,652c
+        default:
+            break;
+.
+643,649c
+        case CY_U3P_USB_EVENT_EP0_STAT_CPLT:
+            break;
+.
+639,641c
+        case CY_U3P_USB_EVENT_EP_UNDERRUN:
+            underrunCnt++;
+            CyU3PDebugPrint (4, "EP Underrun on %d \n\r",evdata);
+            CyU3PDebugPrint (4, "Underrun count %d \n\r",underrunCnt);
+            status = CyU3PUsbResetEndpointMemories ();
+            if (status != CY_U3P_SUCCESS)
+			{
+				CyU3PDebugPrint (2, "USB Endpoint Reset failed\r\n");
+			}
+            break;
+.
+636,637c
+            if (evtype == CY_U3P_USB_EVENT_DISCONNECT) {
+                CyU3PDebugPrint (8, "CY_U3P_USB_EVENT_DISCONNECT detected\r\n");
+            }
+            break;
+.
+630,634c
+            /* Stop the function. */
+            if (glIsApplnActive)
+            {
+                CyFxApplnStop ();
+            }
+.
+626,628c
+            /* Start the function. */
+            CyFxApplnStart ();
+            break;
+
+        case CY_U3P_USB_EVENT_RESET:
+        case CY_U3P_USB_EVENT_DISCONNECT:
+            glForceLinkU2 = CyFalse;
+.
+611,624c
+        case CY_U3P_USB_EVENT_CONNECT:
+            CyU3PDebugPrint (8, "CY_U3P_USB_EVENT_CONNECT detected\r\n");
+            break;
+
+        case CY_U3P_USB_EVENT_SETCONF:
+            /* If the application is already active
+             * stop it before re-enabling. */
+            if (glIsApplnActive)
+            {
+                CyFxApplnStop ();
+            }
+.
+607c
+	CyU3PReturnStatus_t status;
+
+    if ((evtype != CY_U3P_USB_EVENT_EP0_STAT_CPLT) && (evtype != CY_U3P_USB_EVENT_RESUME))
+        CyU3PDebugPrint (2, "USB event: %d %d\r\n", evtype, evdata);
+.
+602,605c
+CyFxApplnUSBEventCB (
+    CyU3PUsbEventType_t evtype, /* Event type */
+    uint16_t            evdata  /* Event data */
+    )
+.
+587,596d
+581c
+                    CyU3PUsbSetEpNak (CY_FX_EP_LOOP_IN, CyFalse);
+.
+579a
+#else
+                    CyU3PDmaChannelReset (&glLoopOutChHandle);
+                    CyU3PDmaChannelReset (&glLoopInChHandle);
+                    CyU3PUsbFlushEp (CY_FX_EP_LOOP_IN);
+                    CyU3PUsbResetEp (CY_FX_EP_LOOP_IN);
+                    CyU3PDmaChannelSetXfer (&glLoopOutChHandle, 0);
+                    CyU3PDmaChannelSetXfer (&glLoopInChHandle, 0);
+                    CyU3PUsbStall (wIndex, CyFalse, CyTrue);
+                    isHandled = CyTrue;
+                    CyU3PUsbAckSetup ();
+#endif
+.
+576c
+#ifdef LOOPBACK_AUTO
+                    CyU3PDmaChannelReset (&glLoopOutChHandle);
+                    CyU3PUsbFlushEp (CY_FX_EP_LOOP_IN);
+                    CyU3PUsbResetEp (CY_FX_EP_LOOP_IN);
+                    CyU3PDmaChannelSetXfer (&glLoopOutChHandle, 0);
+.
+571,574c
+                }
+                if (wIndex == CY_FX_EP_LOOP_IN)
+                {
+                    CyU3PUsbSetEpNak (CY_FX_EP_LOOP_IN, CyTrue);
+                    CyU3PBusyWait (125);
+.
+568,569c
+                	CyU3PDebugPrint(0,"Handling Clear Feature on EP0r\n");
+.
+566c
+                if(wIndex == 0)
+.
+561a
+
+                    CyU3PUsbSetEpNak (CY_FX_EP_CONSUMER, CyFalse);
+.
+554,560c
+#ifdef MULTI_DMA
+                    CyU3PDmaMultiChannelReset (&glDualGPIF2USB_Handle);
+#else
+                    CyU3PDmaChannelReset (&glDmaChHandle);
+#endif
+                    CyU3PUsbFlushEp(CY_FX_EP_CONSUMER);
+                    CyU3PUsbResetEp (CY_FX_EP_CONSUMER);
+#ifdef MULTI_DMA
+                    CyU3PDmaMultiChannelSetXfer (&glDualGPIF2USB_Handle, CY_FX_GPIFTOUSB_DMA_TX_SIZE, 0);
+#else
+                    CyU3PDmaChannelSetXfer (&glDmaChHandle, CY_FX_GPIFTOUSB_DMA_TX_SIZE);
+#endif
+.
+552c
+                    CyU3PUsbSetEpNak (CY_FX_EP_CONSUMER, CyTrue);
+.
+550c
+                if (wIndex == CY_FX_EP_CONSUMER)
+.
+521,522c
+                    glForceLinkU2 = CyTrue;
+.
+502a
+    wLength  = ((setupdat1 & CY_U3P_USB_LENGTH_MASK)  >> CY_U3P_USB_LENGTH_POS);
+
+    if (bType == CY_U3P_USB_VENDOR_RQT)
+    {
+        /* Vendor command is sent by test applications. Start the loop that tries to keep the link
+         * in U0.
+         */
+
+    	CyU3PDebugPrint (0, "Vendor Command Received: ");
+
+        switch (bRequest)
+        {
+            case CMD_GET_FW_VERSION:
+            	CyU3PDebugPrint(0,"Version\r\n");
+                CyU3PUsbSendEP0Data (2, version);
+            	break;
+
+            case CMD_GET_REVID_VERSION:
+            	CyU3PDebugPrint(0,"Revision\r\n");
+                CyU3PUsbSendEP0Data (1, version);
+            	break;
+
+            case CMD_DATA_TRANSFER:
+            	if (TransferActive == CyFalse) {
+            		CyU3PDebugPrint (0, "0xB5 Starting Data transfer.\r\n");
+            		TransferActive = CyTrue;
+
+            		// Switch from idle state to transfer state
+            		/*status = CyU3PGpifSMSwitch(DMAWAIT,IDLE_THREAD0,IDLE_THREAD0,0,0);
+            		if (status != CY_U3P_SUCCESS)
+				    {
+						CyU3PDebugPrint (4, "\r GPIFSMSwitch=%d\n", status);
+				    }*/
+					CyU3PGpifControlSWInput(CyTrue); // no return value
+
+            	} else {
+            	   CyU3PDebugPrint (0, "0xB5 Stopping Data transfer.\r\n");
+            	   TransferActive = CyFalse;
+
+					// Switch to Idle State
+					/*status = CyU3PGpifSMSwitch(0xFFFF,DMAWAIT,DMAWAIT,0,0);
+					if (status != CY_U3P_SUCCESS)
+					{
+						CyU3PDebugPrint (4, "\r GPIFSMSwitch=%d\n", status);
+					}*/
+				   CyU3PGpifControlSWInput(CyFalse); // no return value
+
+				  /* Stop the GPIF state machine to stop data transfers through FX3 */
+
+				  CyU3PGpifDisable (CyFalse);
+
+				  /* Place the Endpoint in NAK mode before cleaning up the pipe. */
+
+				  //status = CyU3PUsbSetEpNak (CY_FX_EP_BULK_VIDEO, CyTrue);
+				  /*
+				  if (status != CY_U3P_SUCCESS)
+
+				  {
+						CyU3PDebugPrint (4, "\r EP_NAK=%d\n", status);
+
+				  }*/
+
+				  /* Reset the DMA channel and flush the endpoint pipe. */
+				  status = CyU3PDmaMultiChannelReset (&glDualGPIF2USB_Handle);
+				  if (status != CY_U3P_SUCCESS)
+				  {
+						CyU3PDebugPrint (4, "\r DMA_RESET=%d\n", status);
+				  }
+				  status = CyU3PUsbFlushEp (CY_FX_EP_CONSUMER);
+				  if(status != CY_U3P_SUCCESS)
+				  {
+						CyU3PDebugPrint (4, "\r EP_FLUSH=%d\n", status);
+				  }
+				  status = CyU3PDmaMultiChannelSetXfer (&glDualGPIF2USB_Handle, 0, 0);
+				  if (status != CY_U3P_SUCCESS)
+				  	{
+				  		CyU3PDebugPrint (4, "CyU3PMultiDmaChannelSetXfer failed, Error code = %d\n", status);
+				  		CyFxAppErrorHandler(status);
+				  	}
+				  /*status = CyU3PUsbSetEpNak (CY_FX_EP_BULK_VIDEO, CyFalse);
+				  if(status != CY_U3P_SUCCESS)
+				  {
+						CyU3PDebugPrint (4, "\r EP_ACK=%d\n", status);
+				  }*/
+				  status = CyU3PGpifSMStart (START, ALPHA_START);
+				  if (status != CY_U3P_SUCCESS)
+				  {
+					  CyU3PDebugPrint (4, "CyU3PGpifSMStart failed, error code = %d\n", status);
+					  CyFxAppErrorHandler (status);
+				  }
+            	}
+
+            	break;
+
+            case 0x76: /* Request used to check for endpoint corruption. */
+                glEp0Buffer[0] = vendorRqtCnt;
+                glEp0Buffer[1] = 0xDE;
+                glEp0Buffer[2] = 0x5A;
+                glEp0Buffer[3] = ~vendorRqtCnt;
+                status = CyU3PUsbSendEP0Data (wLength, glEp0Buffer);
+                CyU3PDebugPrint (0, "0x76 Request used to check for endpoint corruption.\r\n");
+                if (status != CY_U3P_SUCCESS)
+                {
+                    CyU3PDebugPrint (2, "Send data failed\r\n");
+                }
+
+                vendorRqtCnt++;
+                isHandled = CyTrue;
+                break;
+
+            case 0x77: /* Get current USB log index. */
+            	CyU3PDebugPrint (0, "0x77 Get current USB log index.\r\n");
+                if (wLength >= 2)
+                {
+                    temp = CyU3PUsbGetEventLogIndex ();
+                    CyU3PMemCopy ((uint8_t *)glEp0Buffer, (uint8_t *)&temp, 2);
+                    CyU3PUsbSendEP0Data (2, glEp0Buffer);
+                }
+                else
+                    CyU3PUsbStall (0, CyTrue, CyFalse);
+                isHandled = CyTrue;
+                break;
+
+            case 0x78: /* Get USB event log data. */
+            	CyU3PDebugPrint (0, "0x78 Get USB event log data.\r\n");
+                if (wLength != 0)
+                {
+                    if (wLength < CYFX_USBLOG_SIZE)
+                        CyU3PUsbSendEP0Data (wLength, gl_UsbLogBuffer);
+                    else
+                        CyU3PUsbSendEP0Data (CYFX_USBLOG_SIZE, gl_UsbLogBuffer);
+                }
+                else
+                    CyU3PUsbAckSetup ();
+                isHandled = CyTrue;
+                break;
+
+            case 0x95:
+            	CyU3PDebugPrint (0, "0x95\r\n");
+                CyU3PUsbAckSetup ();
+                isHandled = CyTrue;
+                break;
+
+            case 0xE0: /* Device reset request for automation. */
+            	CyU3PDebugPrint (0, "0xE0 Device reset request for automation.\r\n");
+                glRstRqt = CyTrue;
+                CyU3PUsbAckSetup ();
+                isHandled = CyTrue;
+                break;
+
+            default:
+            	CyU3PDebugPrint (0, "0x%x \n\r", bRequest);
+                break;
+        }
+    }
+.
+494a
+    uint16_t temp;
+    CyU3PReturnStatus_t status;
+.
+493c
+    uint16_t wValue, wIndex, wLength;
+.
+482c
+CyFxApplnUSBSetupCB (
+.
+479a
+#define CMD_GET_FW_VERSION		(0xb0)
+#define CMD_START				(0xb1)
+#define CMD_GET_REVID_VERSION	(0xb2)
+#define CMD_DATA_TRANSFER		(0xb5)
+
+
+uint8_t version[] = {1,0};
+
+.
+477a
+
+    /* Disable the loopback endpoints. */
+    CyU3PSetEpConfig (CY_FX_EP_LOOP_OUT, &epCfg);
+    CyU3PSetEpConfig (CY_FX_EP_LOOP_IN, &epCfg);
+.
+463,471c
+    /* Disable the GPIF->USB endpoint. */
+.
+456d
+452,453c
+#ifdef MULTI_DMA
+    CyU3PDmaMultiChannelDestroy (&glDualGPIF2USB_Handle);
+#else
+    CyU3PDmaChannelDestroy (&glDmaChHandle);
+#endif
+.
+450a
+    CyU3PGpifDisable (CyTrue);
+
+    CyU3PDmaChannelDestroy (&glLoopOutChHandle);
+#ifndef LOOPBACK_AUTO
+    CyU3PDmaChannelDestroy (&glLoopInChHandle);
+#endif
+
+.
+442c
+CyFxApplnStop (
+.
+431,432c
+    dmaCfg.size           = 4096;
+    dmaCfg.count          = 4;
+    dmaCfg.prodSckId      = CY_U3P_CPU_SOCKET_PROD;
+    dmaCfg.consSckId      = CY_FX_LOOP_CONSUMER_SOCK;
+    dmaCfg.dmaMode        = CY_U3P_DMA_MODE_BYTE;
+    dmaCfg.notification   = 0;
+    dmaCfg.cb             = 0;
+    dmaCfg.prodHeader     = 0;
+    dmaCfg.prodFooter     = 0;
+    dmaCfg.consHeader     = 0;
+    dmaCfg.prodAvailCount = 0;
+    apiRetStatus = CyU3PDmaChannelCreate (&glLoopInChHandle, CY_U3P_DMA_TYPE_MANUAL_OUT, &dmaCfg);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+    {
+        CyFxAppErrorHandler (apiRetStatus);
+    }
+
+    apiRetStatus = CyU3PDmaChannelSetXfer (&glLoopInChHandle, 0);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+    {
+        CyFxAppErrorHandler (apiRetStatus);
+    }
+
+#endif
+
+    /* Load and start the GPIF state machine. */
+    apiRetStatus = CyU3PGpifLoad (&CyFxGpifConfig);
+    CyU3PDebugPrint (4, "Using GPIF:%s\n\r", CyFxGpifConfigName);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+    {
+        CyU3PDebugPrint (4, "CyU3PGpifLoad failed, error code = %d\n", apiRetStatus);
+        CyFxAppErrorHandler (apiRetStatus);
+    }
+
+    apiRetStatus = CyU3PGpifSMStart (START, ALPHA_START);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+    {
+        CyU3PDebugPrint (4, "CyU3PGpifSMStart failed, error code = %d\n", apiRetStatus);
+        CyFxAppErrorHandler (apiRetStatus);
+    }
+.
+427,428c
+        CyFxAppErrorHandler (apiRetStatus);
+.
+424c
+    apiRetStatus = CyU3PDmaChannelSetXfer (&glLoopOutChHandle, 0);
+.
+420,421c
+        CyFxAppErrorHandler (apiRetStatus);
+.
+416,417c
+#else
+
+    /* Create the channels used for loop-back function. */
+    dmaCfg.size           = 4096;
+    dmaCfg.count          = 4;
+    dmaCfg.prodSckId      = CY_FX_LOOP_PRODUCER_SOCK;
+    dmaCfg.consSckId      = CY_U3P_CPU_SOCKET_CONS;
+    dmaCfg.dmaMode        = CY_U3P_DMA_MODE_BYTE;
+    dmaCfg.notification   = CY_U3P_DMA_CB_PROD_EVENT;
+    dmaCfg.cb             = LoopBackDmaCallback;
+    dmaCfg.prodHeader     = 0;
+    dmaCfg.prodFooter     = 0;
+    dmaCfg.consHeader     = 0;
+    dmaCfg.prodAvailCount = 0;
+    apiRetStatus = CyU3PDmaChannelCreate (&glLoopOutChHandle, CY_U3P_DMA_TYPE_MANUAL_IN, &dmaCfg);
+.
+413c
+        CyFxAppErrorHandler (apiRetStatus);
+.
+404,409c
+    apiRetStatus = CyU3PDmaChannelSetXfer (&glLoopOutChHandle, 0);
+.
+401c
+        CyFxAppErrorHandler (apiRetStatus);
+.
+396,397c
+	#ifdef STREAMING_MANUAL
+		dmaCfg.notification = CY_U3P_DMA_CB_CONS_SUSP | CY_U3P_DMA_CB_PROD_EVENT;
+		dmaCfg.cb = GpifToUsbDmaCallback;
+		apiRetStatus = CyU3PDmaChannelCreate (&glDmaChHandle, CY_U3P_DMA_TYPE_MANUAL, &dmaCfg);
+	#else
+    dmaCfg.notification = CY_U3P_DMA_CB_CONS_SUSP;
+		dmaCfg.cb = GpifToUsbDmaCallback;
+    apiRetStatus = CyU3PDmaChannelCreate (&glDmaChHandle, CY_U3P_DMA_TYPE_AUTO, &dmaCfg);
+	#endif
+	if (apiRetStatus != CY_U3P_SUCCESS)
+	{
+		CyU3PDebugPrint (4, "CyU3PDmaChannelCreate failed, Error code = %d\n", apiRetStatus);
+		CyFxAppErrorHandler(apiRetStatus);
+	}
+
+    /* Set DMA Channel transfer size */
+    apiRetStatus = CyU3PDmaChannelSetXfer (&glDmaChHandle, CY_FX_GPIFTOUSB_DMA_TX_SIZE);
+	if (apiRetStatus != CY_U3P_SUCCESS)
+	{
+        CyU3PDebugPrint (4, "CyU3PDmaChannelSetXfer failed, Error code = %d\n", apiRetStatus);
+		CyFxAppErrorHandler(apiRetStatus);
+	}
+#endif
+
+#ifdef LOOPBACK_AUTO
+
+    /* Create the channels used for loop-back function. */
+    dmaCfg.size           = 4096;
+    dmaCfg.count          = 8;
+    dmaCfg.prodSckId      = CY_FX_LOOP_PRODUCER_SOCK;
+    dmaCfg.consSckId      = CY_FX_LOOP_CONSUMER_SOCK;
+    dmaCfg.dmaMode        = CY_U3P_DMA_MODE_BYTE;
+    dmaCfg.notification   = 0;
+    dmaCfg.cb             = 0;
+    dmaCfg.prodHeader     = 0;
+    dmaCfg.prodFooter     = 0;
+    dmaCfg.consHeader     = 0;
+    dmaCfg.prodAvailCount = 0;
+    apiRetStatus = CyU3PDmaChannelCreate (&glLoopOutChHandle, CY_U3P_DMA_TYPE_AUTO, &dmaCfg);
+.
+389,390d
+375,387c
+    dmaCfg.size  = CY_FX_DMA_BUF_SIZE;
+    dmaCfg.count = CY_FX_DMA_BUF_COUNT;
+    dmaCfg.prodSckId = CY_FX_GPIF_PRODUCER_SOCKET;
+    dmaCfg.consSckId = CY_FX_EP_CONSUMER_SOCKET;
+.
+373c
+    CyU3PUsbFlushEp (CY_FX_EP_LOOP_OUT);
+    CyU3PUsbFlushEp (CY_FX_EP_LOOP_IN);
+
+#ifdef MULTI_DMA
+    // Create a multi-DMA AUTO channel for the GPIF to USB transfer
+	CyU3PMemSet((uint8_t *)&dmaMultiConfig, 0, sizeof(dmaMultiConfig));
+	dmaMultiConfig.size           = CY_FX_DMA_BUF_SIZE;			// Use same size buffers for all USB Speeds
+	dmaMultiConfig.count          = CY_FX_DMA_BUF_COUNT;
+	dmaMultiConfig.validSckCount  = 2;		// Number of producer sockets
+	dmaMultiConfig.prodSckId[0]   = (CyU3PDmaSocketId_t)CY_FX_GPIF_PRODUCER_SOCKET_0;
+	dmaMultiConfig.prodSckId[1]   = (CyU3PDmaSocketId_t)CY_FX_GPIF_PRODUCER_SOCKET_1;
+	dmaMultiConfig.consSckId[0]   = (CyU3PDmaSocketId_t)CY_FX_EP_CONSUMER_SOCKET;
+	dmaMultiConfig.dmaMode        = CY_U3P_DMA_MODE_BYTE;
+	dmaMultiConfig.notification = CY_U3P_DMA_CB_CONS_SUSP|CY_U3P_DMA_CB_PROD_EVENT | CY_U3P_DMA_CB_CONS_EVENT;
+	dmaMultiConfig.cb = GpifToUsbDmaCallback;
+	apiRetStatus = CyU3PDmaMultiChannelCreate(&glDualGPIF2USB_Handle, CY_U3P_DMA_TYPE_AUTO_MANY_TO_ONE, &dmaMultiConfig);
+	if (apiRetStatus != CY_U3P_SUCCESS)
+	{
+		CyU3PDebugPrint (4, "CyU3PDmaMultiChannelCreate failed, Error code = %d\n", apiRetStatus);
+		CyFxAppErrorHandler(apiRetStatus);
+	}
+	// Start the DMA Channel with transfer size to Infinite
+    apiRetStatus = CyU3PDmaMultiChannelSetXfer(&glDualGPIF2USB_Handle, 0, 0);
+	if (apiRetStatus != CY_U3P_SUCCESS)
+	{
+		CyU3PDebugPrint (4, "CyU3PMultiDmaChannelSetXfer failed, Error code = %d\n", apiRetStatus);
+		CyFxAppErrorHandler(apiRetStatus);
+	}
+#else
+    /* Create a DMA AUTO channel for the GPIF to USB transfer. */
+.
+369,371c
+    apiRetStatus = CyU3PSetEpConfig (CY_FX_EP_LOOP_IN, &epCfg);
+    if (apiRetStatus != CY_U3P_SUCCESS)
+    {
+        CyU3PDebugPrint (4, "CyU3PSetEpConfig failed, Error code = %d\n", apiRetStatus);
+        CyFxAppErrorHandler (apiRetStatus);
+    }
+
+    CyU3PUsbRegisterEpEvtCallback (CyFxApplnEpCallback, 0x1B0, 0x04, 0x06);
+.
+361,362c
+    /*
+       Configure the IN endpoint to allow combining data from multiple buffers into one burst.
+       This can help achieve better performance in most cases.
+     */
+    CyU3PUsbEPSetBurstMode (CY_FX_EP_CONSUMER, CyTrue);
+
+    /* Flush the endpoint memory */
+    CyU3PUsbFlushEp(CY_FX_EP_CONSUMER);
+
+    epCfg.burstLen = (usbSpeed == CY_U3P_SUPER_SPEED) ? 4 : 1;
+    apiRetStatus = CyU3PSetEpConfig (CY_FX_EP_LOOP_OUT, &epCfg);
+.
+353,354c
+    /* Consumer endpoint configuration */
+    apiRetStatus = CyU3PSetEpConfig (CY_FX_EP_CONSUMER, &epCfg);
+.
+348,349c
+    epCfg.burstLen = (usbSpeed == CY_U3P_SUPER_SPEED) ? (CY_FX_EP_BURST_LENGTH) : 1;
+.
+335c
+    case CY_U3P_SUPER_SPEED:
+        /* Disable USB link low power entry to optimize USB throughput. */
+        CyU3PUsbLPMDisable();
+.
+317a
+    CyU3PDmaMultiChannelConfig_t dmaMultiConfig;
+.
+312c
+CyFxApplnStart (
+.
+304c
+        if (epNum == CY_FX_EP_CONSUMER)
+        {
+            CyU3PDebugPrint (2, "Halting USB Streaming EP: %d\r\n", BulkRstCnt++);
+            CyU3PUsbStall (CY_FX_EP_CONSUMER, CyTrue, CyFalse);
+        }
+        if (epNum == CY_FX_EP_LOOP_IN)
+        {
+            CyU3PDebugPrint (2, "Halting USB Loopback EP: %d\r\n", LoopRstCnt++);
+            CyU3PUsbStall (CY_FX_EP_LOOP_IN, CyTrue, CyFalse);
+        }
+.
+301,302c
+    CyU3PDebugPrint (2, "EP Event: ep=%x event=%d\r\n", epNum, evtype);
+    if (epNum == CY_FX_EP_CONSUMER)
+        BulkEpEvtCount++;
+    if (epNum == CY_FX_EP_LOOP_IN)
+        InEpEvtCount++;
+    if (epNum == CY_FX_EP_LOOP_OUT)
+        OutEpEvtCount++;
+
+    if (evtype == CYU3P_USBEP_SS_RESET_EVT)
+.
+298c
+        CyU3PUSBSpeed_t   usbSpeed,
+.
+295,296c
+/* Endpoint specific event callback. For now, we only keep a count of the endpoint events that occur. */
+static void
+CyFxApplnEpCallback (
+.
+293c
+static uint32_t BulkRstCnt = 0;
+static uint32_t LoopRstCnt = 0;
+.
+289a
+
+.
+287,288c
+            CyU3PMemCopy (dmaInfo.buffer, input->buffer_p.buffer, input->buffer_p.count);
+            CyU3PDmaChannelCommitBuffer (&glLoopInChHandle, input->buffer_p.count, 0);
+            CyU3PDmaChannelDiscardBuffer (chHandle);
+.
+283,285c
+        /* Note: We expect that data will be read from the IN endpoint on a timely basis,
+         *       and that we do not have a case where all the buffers fill up on the device
+         *       side. We are only using a 15ms timeout because the USB driver might end up
+         *       holding a Mutex lock on the channel for upto 10 ms while processing EP0
+         *       vendor commands.
+         */
+        status = CyU3PDmaChannelGetBuffer (&glLoopInChHandle, &dmaInfo, 15);
+        if (status == CY_U3P_SUCCESS)
+.
+276,281d
+273,274c
+    /* Copy and commit the data on the IN endpoint and discard the current buffer. */
+    if (type == CY_U3P_DMA_CB_PROD_EVENT)
+.
+269,271c
+    CyU3PDmaBuffer_t    dmaInfo;
+    CyU3PReturnStatus_t status;
+.
+262,267c
+void
+LoopBackDmaCallback (
+        CyU3PDmaChannel   *chHandle,
+        CyU3PDmaCbType_t   type,
+        CyU3PDmaCBInput_t *input)
+.
+237,258c
+        /* Data transfer has been started. Enable the LPM disable loop. */
+    }
+#endif
+    if (type == CY_U3P_DMA_CB_PROD_EVENT)
+    {
+		glProdCount++;
+    }
+    else if (type == CY_U3P_DMA_CB_CONS_EVENT)
+    {
+    	glConsCount++;
+.
+234a
+
+.
+232,233c
+        CyU3PDmaChannelCommitBuffer (chHandle, input->buffer_p.count, 0);
+.
+223,230c
+        /* Change the first and last data bytes for tracking on a USB trace. */
+        input->buffer_p.buffer[0x0000] = DataSignature++;
+        input->buffer_p.buffer[input->buffer_p.count - 1] = DataSignature++;
+.
+210,220c
+#ifdef STREAMING_MANUAL
+.
+205,208c
+GpifToUsbDmaCallback (
+        CyU3PDmaMultiChannel   *chHandle,
+        CyU3PDmaCbType_t   type,
+        CyU3PDmaCBInput_t *input)
+.
+187,203c
+uint32_t glProdCount = 0;
+uint32_t glConsCount = 0;
+.
+122,146d
+118d
+116c
+CyFxApplnDebugInit (void)
+.
+103a
+    /* Let's do a device reset here. */
+    CyU3PThreadSleep (100);
+    CyU3PDeviceReset (CyFalse);
+
+.
+101c
+	CyU3PDebugPrint (2, "Resetting device...");
+.
+92a
+/* Enable this to change the streaming channel into a MANUAL channel. */
+//#define STREAMING_MANUAL
+.
+88,91c
+/* Enable this to change the loopback channel into an AUTO channel. */
+//#define LOOPBACK_AUTO
+.
+85,86c
+static volatile uint32_t BulkEpEvtCount = 0;    /* Number of endpoint events received on streaming endpoint. */
+static volatile uint32_t InEpEvtCount = 0;      /* Number of endpoint events received on loopback IN endpoint. */
+static volatile uint32_t OutEpEvtCount = 0;     /* Number of endpoint events received on loopback OUT endpoint. */
+static volatile uint8_t  DataSignature = 0;     /* Variable used to update streaming data with a sequence number. */
+static volatile CyBool_t TransferActive = CyFalse; /* Boolean used to indicate a running data transfer from FX3 to
+													USB host using the CollectData.exe application */
+.
+83d
+59,81c
+/*
+ * USB event logging: We use a 4 KB buffer to store USB driver event data, which can then be viewed
+ * through JTAG or USB vendor request.
+ */
+#define CYFX_USBLOG_SIZE (0x1000)
+.
+57a
+#include "cyu3pib.h"
+#include "cyu3gpif.h"
+#include "cyfxgpif2config.h"
+
+char* CyFxGpifConfigName = { "cyfxgpif2config" };
+CyU3PThread     glAppThread;            /* Application thread structure */
+
+/* Enable this to change the streaming channel into a Multi-DMA-AUTO channel. */
+#define MULTI_DMA
+
+#ifdef MULTI_DMA
+CyU3PDmaMultiChannel glDualGPIF2USB_Handle;
+#else
+CyU3PDmaChannel glDmaChHandle;
+#endif
+CyU3PDmaChannel glLoopOutChHandle;
+CyU3PDmaChannel glLoopInChHandle;
+
+CyBool_t glIsApplnActive = CyFalse;     /* Whether the application is active or not. */
+CyBool_t glForceLinkU2   = CyFalse;     /* Whether the device should try to initiate U2 mode. */
+
+uint8_t glEp0Buffer[64] __attribute__ ((aligned (32))); /* Local buffer used for vendor command handling. */
+volatile uint8_t  vendorRqtCnt = 0;
+volatile uint32_t underrunCnt = 0;
+volatile CyBool_t glRstRqt = CyFalse;
+.
+53c
+#include "cyfxgpiftousb.h"
+.
+27,46c
+    This application allows continuous data transfers from GPIF to USB. it is based on the official
+    bulk source sink example of Cypress.
+
+    The application makes use a simple GPIF configuration which continually latches the state
+    of the GPIF data pins and fills them into full data packets to be sent to the USB host through
+    a BULK-IN endpoint. The GPIF configuration and DMA data path are setup to facilitate the fastest
+    possible data transfer. By default, the data streaming is done through an AUTO DMA channel;
+    but this can be changed to a MANUAL DMA channel using the STREAMING_MANUAL pre-processor
+    definition below. When the MANUAL DMA channel is used, the firmware modifies the first and
+    last bytes of each 1 KB of data with a sequential number pattern; so that we can check for
+    any missing data.
+
+    The application also implements a pair of BULK-OUT and BULK-IN endpoints configured in a
+    data loop back configuration. This data loop-back is done with firmware intervention using
+    a pair of MANUAL-IN and MANUAL-OUT DMA channels. This can be changed to a hardware based
+    AUTO loopback using the LOOPBACK_AUTO pre-processor definition.
+
+    This application also demonstrates the use of the endpoint specific CYU3P_USBEP_SS_RESET_EVT
+    event to detect and recover from potential USB data corruption due to protocol level errors.
+.
+23,25d
+2c
+ ## Cypress USB 3.0 Platform source file (cyfxgpiftousb.c)
+.
